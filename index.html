@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Turkana | The Production Archive</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d4af37">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,700&family=Inter:wght@300;400;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --page-bg: #0d0d0d;
+            --text: #999;
+            --alert: #a31616;
+            --dust: #B8860B;
+            --white: #F5F5F5;
+            --gold: #d4af37;
+            --flip-speed: 0.6s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            perspective: 2500px;
+        }
+
+        .book-container {
+            position: relative;
+            width: 480px;
+            height: 660px;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%; height: 100%;
+            top: 0; left: 0;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform var(--flip-speed) cubic-bezier(0.645, 0.045, 0.355, 1), z-index 0.1s;
+        }
+
+        .front, .back {
+            position: absolute;
+            width: 100%; height: 100%;
+            padding: 40px;
+            backface-visibility: hidden;
+            border: 1px solid #1a1a1a;
+            background: var(--page-bg);
+            overflow-y: auto;
+            box-shadow: inset 5px 0 60px rgba(0,0,0,0.9);
+        }
+
+        .back { transform: rotateY(180deg); background: #080808; }
+        .page.flipped { transform: rotateY(-180deg); }
+
+        .toc-section { margin-bottom: 18px; }
+        .toc-head { color: var(--gold); font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 4px; margin-bottom: 8px; font-weight: 900; }
+        .toc-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; cursor: pointer; color: var(--text); font-size: 0.65rem; }
+        .toc-item:hover { color: var(--white); transform: translateX(3px); }
+        .toc-item::after { content: ""; flex: 1; border-bottom: 1px dotted #333; margin: 0 8px; }
+
+        .meta { color: var(--dust); font-size: 0.6rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 900; margin-bottom: 10px; display: block; }
+        h1 { font-family: 'Playfair Display', serif; color: var(--white); font-size: 1.5rem; line-height: 1.2; margin-bottom: 15px; font-style: italic; }
+        p { color: var(--text); font-size: 0.85rem; line-height: 1.6; border-left: 1px solid var(--alert); padding-left: 15px; margin-bottom: 18px; }
+        .stats-box { background: #000; padding: 12px; border: 1px solid #222; margin: 12px 0; }
+        .stats-box small { color: var(--gold); text-transform: uppercase; font-size: 0.55rem; display: block; }
+        .stats-box div { color: #fff; font-size: 0.9rem; font-weight: bold; margin-top: 3px; }
+        
+        img, video { width: 100%; border: 1px solid #222; margin: 8px 0; }
+        .dark-note { font-style: italic; color: #555; font-size: 0.75rem; line-height: 1.4; text-align: center; margin: 15px 0; }
+
+        .lead-card { border-bottom: 1px solid #222; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .lead-info h4 { color: #fff; font-size: 0.8rem; margin: 0; }
+        .lead-info span { color: var(--dust); font-size: 0.6rem; text-transform: uppercase; }
+        .wa-ref { background: #25D366; color: #000; padding: 4px 8px; font-size: 0.6rem; font-weight: 900; text-decoration: none; border-radius: 2px; }
+
+        .portal-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .addr-box { background: #050505; padding: 10px; border: 1px solid #222; cursor: pointer; transition: 0.2s; }
+        .addr-box:hover { border-color: var(--gold); background: #0a0a0a; }
+        .addr-box label { color: var(--gold); font-size: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        .addr-box code { color: #eee; font-size: 0.6rem; word-break: break-all; }
+
+        .nav-ui { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 3000; }
+        .btn { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; text-transform: uppercase; font-weight: 900; cursor: pointer; font-size: 0.65rem; }
+        .btn.hidden { opacity: 0; pointer-events: none; }
+
+        .cover-outer { background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%) !important; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .book-logo { width: 50px; height: 50px; border: 2px solid var(--gold); transform: rotate(45deg); display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .book-logo span { transform: rotate(-45deg); color: var(--gold); font-size: 1.2rem; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .book-container { width: 90vw; height: 78vh; transform: translateX(0) !important; }
+            .page.flipped { transform: rotateY(-180deg) translateX(-20%); opacity: 0; pointer-events: none; }
+            .page .back { transform: rotateY(0deg); backface-visibility: visible; }
+            .page:not(.show-back) .back { display: none; }
+            .page.show-back .front { display: none; }
+        }
+
+
+#install-banner {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: #111;
+    border: 1px solid var(--gold);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9999;
+    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+}
+
+#install-banner.show {
+    bottom: 25px;
+}
+
+.banner-text {
+    color: var(--white);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    margin-right: 15px;
+}
+
+.banner-text b {
+    color: var(--gold);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.banner-btns {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn-yes {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.btn-close {
+    background: transparent;
+    color: #555;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    font-family: serif;
+}
+    </style>
+</head>
+<body>
+
+    <div class="book-container" id="book">
+        
+        <div class="page" id="p0">
+            <div class="front cover-outer">
+                <h1 style="font-size: 2.5rem; color: var(--gold); margin: 0;">TURKANA</h1>
+                <div style="letter-spacing: 8px; color: #fff; font-size: 0.5rem; margin: 15px 0; border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); padding: 8px 0;">DIGITAL ARCHIVE 2026</div>
+                <p style="border: none; text-align: center; font-style: italic; color: #777; font-size: 0.7rem;">Every second you wait, a heart slows down.</p>
+            </div>
+            <div class="back">
+                <span class="meta">Robust Index</span>
+                <div class="toc-section">
+                    <div class="toc-head">I. Foundations</div>
+                    <div class="toc-item" onclick="sequentialJump(1)"><span>What & Where is Turkana?</span><span>01</span></div>
+                    <div class="toc-item" onclick="sequentialJump(2)"><span>Where the rain stopped</span><span>03</span></div>
+                </div>
+                <div class="toc-section">
+                    <div class="toc-head">II. Institutional Failure</div>
+                    <div class="toc-item" onclick="sequentialJump(3)"><span>The NGO Paradox</span><span>05</span></div>
+                    <div class="toc-item" onclick="sequentialJump(4)"><span>Government Silences</span><span>07</span></div>
+                </div>
+                <div class="toc-section">
+                    <div class="toc-head">III. The Human Cost</div>
+                    <div class="toc-item" onclick="sequentialJump(5)"><span>Sensory Evidence (Video)</span><span>09</span></div>
+                    <div class="toc-item" onclick="sequentialJump(6)"><span>Dark Psychology of Hunger</span><span>11</span></div>
+                </div>
+                <div class="toc-section">
+                    <div class="toc-head">IV. Our Ecosystem</div>
+                    <div class="toc-item" onclick="sequentialJump(7)"><span>Sustainable Vision</span><span>13</span></div>
+                    <div class="toc-item" onclick="sequentialJump(8)"><span>Leadership & Council</span><span>15</span></div>
+                </div>
+                <div class="toc-section">
+                    <div class="toc-head">V. Direct Action</div>
+                    <div class="toc-item" onclick="sequentialJump(9)"><span>The Multi-Currency Portal</span><span>17</span></div>
+                    <div class="toc-item" onclick="sequentialJump(10)"><span>Contact Hub</span><span>19</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="page" id="p1">
+            <div class="front">
+                <span class="meta">Archive 01</span>
+               <h1>The Cradle of Thirst</h1> 
+               <p>In the far reaches of northern Kenya lies Turkana, a land both ancient and unforgiving. Its cracked earth and relentless sun whisper stories older than civilization itself—a place where the first humans once walked, shaping the dawn of humanity.</p> 
+               <p>Yet today, Turkana is a crucible of survival, where modern life clashes with prehistoric conditions. Rivers vanish into dust, and every day is a battle against thirst and scarcity. What secrets does this harsh land hold, and how has it come to be a place where life clings on by a thread? The answers are as compelling as they are haunting.</p>
+               
+                <div class="stats-box">
+                    <small>Coordinates</small>
+                    <div>3.1167° N, 35.5963° E (Lodwar)</div>
+                </div>
+            </div>
+            <div class="back">
+                <span class="meta">Archive 02</span>
+                <h1>What is happening?</h1> 
+                <p>Once fertile lands are now dust bowls. 800,000 pastoralists face a silent collapse, as their herds—and the futures of their children—disappear before their eyes.</p>
+
+                <img src="videos/Turkana1.webp">
+            </div>
+        </div>
+
+        <div class="page" id="p2">
+            <div class="front">
+                <span class="meta">Origin</span>
+                <h1>Where the Rain Stopped</h1> 
+                <p>Decades of shifting rains battered Turkana, but between 2023 and 2026, the climate delivered its final, brutal blow. This isn’t neglect or failure—it’s a warning from a world where extreme weather can strike anywhere. For Turkana, it struck hardest, leaving the land too hard even for a grave.</p>
+
+            </div>
+            <div class="back">
+                <span class="meta">The community</span>
+                <h1>Why This Community?</h1> 
+                <p>The Turkana are fierce desert warriors, but even the strongest cannot fight a changing climate alone. Look at the children, the elderly, the sick, the disabled—fierce hearts cannot replace water, pasture, and support. They don’t need pity; they need the lifelines the world’s shifts have stolen from them.</p>
+
+                <img src="videos/Turkana2.webp">
+            </div>
+        </div>
+
+        <div class="page" id="p3">
+            <div class="front">
+                <span class="meta">Critique</span>
+                <h1>The NGO Paradox</h1> 
+                <p>NGOs bring vital help and hope, but even their reach has limits. Funding runs out, resources are stretched, and not every community can be served. Turkana was no exception—here, the crisis ran ahead of support, leaving lives exposed despite the aid that did arrive.</p>
+
+            </div>
+            <div class="back">
+                <span class="meta">Reality</span>
+                <h1>Direct vs. Indirect</h1> 
+                <p>Every donation matters. Some go to large charities with many operational layers, while others go straight to essential services—like fueling water trucks for communities in urgent need. Different paths, same goal: saving lives.</p>
+
+                <div class="dark-note">"Bureaucracy is a luxury the starving cannot afford."</div>
+            </div>
+        </div>
+
+        <div class="page" id="p4">
+            <div class="front">
+                <span class="meta">Politics</span>
+                <h1>Government Silences</h1> 
+                <p>Even with government support, much remains undone. Turkana faces daily crises of hunger, drought, and economic strain—long before they ever reach headlines or trigger national disaster declarations. While the national treasury releases its budget once a year, local communities endure hardship every day. Promised reserves often fall short, and mismanagement by some officials worsens the struggle, even though many leaders work sincerely. For Turkana, survival can’t wait for politics or media attention—it is an urgent, unrelenting reality.</p>
+
+            </div>
+            <div class="back">
+                <span class="meta">Truth</span>
+                <h1>Why Unfulfilled?</h1> 
+                <p>In some regions, promises are tied to politics. In the north, where voters are few and communities remote, those promises rarely reach the people. Here, aid from donors isn’t charity—it’s often the only lifeline that truly works.</p>
+
+            </div>
+        </div>
+
+        <div class="page" id="p5">
+            <div class="front">
+                <span class="meta">Evidence</span>
+                <h1>Witness.</h1>
+                <video controls preload="none" loading="lazy">
+                       <source src="https://collection.cloudinary.com/da1x3v46f/5cce5349f26a5003021207c6298c5215" type="video/mp4">
+                         Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="back">
+                <span class="meta">Names</span>
+               <h1>The Beneficiaries</h1> 
+               <p>Every drop of water, every handful of maize, every sachet of plumpy nuts is rationed to last months. The next community waits—because survival in Turkana cannot pause, and no one is meant to be left behind.</p>
+
+                <div class="stats-box">
+                     <small>Impact from Your Donations</small>
+                     <div>Thanks to donors, 12,000L of water reached families, 5 tons of maize fed children, and 1,200 sachets of plumpy nuts saved lives.</div>
+                     <div>Every $5 donation boosts survival chances by +45%.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="p6">
+            <div class="front">
+                <span class="meta">Psychology</span>
+                <h1>The Lighter Burden</h1> 
+                <p>Mama Akiru lost her third daughter to hunger just days ago. “Now,” she whispers, “I only have two mouths left to struggle for… it is a relief, though it hurts like fire inside me.” Every day is a fight to stretch meager rations, each sip of water and every handful of maize weighed against the memory of a life lost.</p> 
+                <p>Her sorrow is silent, yet unbearable—an echo of the cruel arithmetic of survival in Turkana.</p>
+
+            </div>
+
+            
+
+            <div class="back">
+                <span class="meta">Reflection</span>
+                <h1>Symbol of a Life</h1> <p>A $4 bill can buy a coffee, a snack, or small treats where you are. In Turkana, the same $4 buys 11–13 sachets of Plumpy’Nut—enough to feed ten children for a full day. Just once, that small choice could turn into ten heartbeats kept alive.</p>
+
+            </div>
+        </div>
+
+        <div class="page" id="p7">
+            <div class="front">
+                <span class="meta">Vision</span>
+               <h1>Sustainable Ecosystem</h1>
+               <p>We are building <strong>Solar Boreholes</strong>—a source of water that lasts beyond the next donation. Food meets immediate needs, but these boreholes create independence, a thriving ecosystem, and a future where communities sustain themselves. A legacy your support will be proud of, acknowledged for generations to come.</p>
+
+            </div>
+            <div class="back">
+                <span class="meta">Impact</span>
+               <h1>The Change</h1> 
+               <p>We turn “casualties” into “cultivators.” One solar borehole provides water for 500 people for a lifetime—fueling irrigation, growing food, and sustaining life. Water becomes more than survival; it starts a cycle of growth, nourishment, and opportunity, generation after generation.</p>
+
+            </div>
+        </div>
+
+        <div class="page" id="p8">
+            <div class="front">
+                <span class="meta">The Council</span>
+                <h1>The Operators.</h1>
+                <div class="lead-card">
+                    <div class="lead-info"><h4>Dr. A. Lomorukai</h4><span>Field Logistics Lead</span></div>
+                    <a href="https://wa.me/254123456789?text=Ref:DR_AL" class="wa-ref">CONNECT</a>
+                </div>
+                <div class="lead-card">
+                    <div class="lead-info"><h4>Sarah Jenkins</h4><span>Crisis Coordinator</span></div>
+                    <a href="https://wa.me/254987654321?text=Ref:SJ_Crisis" class="wa-ref">CONNECT</a>
+                </div>
+                <div class="lead-card">
+                    <div class="lead-info"><h4>Mark Chen</h4><span>Financial Auditor</span></div>
+                    <a href="https://wa.me/254000111222?text=Ref:Audit_MC" class="wa-ref">CONNECT</a>
+                </div>
+            </div>
+            <div class="back">
+                <span class="meta">Transparency</span>
+                <h1>Chain of Command.</h1>
+                <p>Our leaders don’t hide behind offices. They are on the ground—dusty boots, open books, and digital ledgers—seeing every need, tracking every contribution, ensuring nothing gets lost in translation.</p>
+            </div>
+        </div>
+
+        <div class="page" id="p9">
+            <div class="front">
+                <span class="meta">Portal</span>
+                <h1>Financial Action.</h1>
+                <div class="portal-grid">
+                    <div class="addr-box" onclick="copy('isaacfadhee@gmail.com')"><label>PayPal</label><code>isaacfadhee@gmail.com</code></div>
+                    <div class="addr-box" onclick="copy('0x...ETH')"><label>Ethereum (ETH/SOL)</label><code>0x742d35Cc6634C0532925a3b844Bc454e4438f44e</code></div>
+                    <div class="addr-box" onclick="copy('bc1q...BTC')"><label>Bitcoin (BTC)</label><code>bc1q_turkana_btc_2026_main</code></div>
+                </div>
+            </div>
+            <div class="back">
+                <span class="meta">Portal II</span>
+                <div class="portal-grid">
+                    <div class="addr-box" onclick="copy('XRP_ADDR')"><label>Ripple (XRP)</label><code>rTurkanaXRP_777_Archive</code></div>
+                    <div class="addr-box" onclick="copy('SOL_ADDR')"><label>Solana (SOL)</label><code>Sol_Turkana_Emergency_Gate</code></div>
+                </div>
+                <div class="dark-note" style="margin-top:10px;">"The currency doesn't matter. The speed does."</div>
+            </div>
+        </div>
+
+        <div class="page" id="p10">
+            <div class="front">
+                <span class="meta">Contact</span>
+                <h1>The Connection.</h1>
+                <p>Email: <strong><a href="mailto:jobisaacmaina22@gmail.com" style="color:#fff;">support@save-turkana.org</a></strong></p>
+                <p>WhatsApp HQ: <strong><a href="https://wa.me/254714063137" target="_blank" style="color:#25D366;">+254 700 000 000</a></strong></p>
+                <img src="videos/Turkana3.webp" style="height:120px;">
+            </div>
+            <div class="back cover-outer">
+                <div class="book-logo"><span>T</span></div>
+                <h2 style="color:var(--gold); font-size:0.8rem; letter-spacing:4px;">SAVE TURKANA</h2>
+                <div style="color: #444; font-size: 0.5rem; margin-top: 15px;">“Share our mission—we’ll be grateful.”</div>
+                <p style="border:none; font-size:0.5rem; margin-top:5px;">You closed the book. They can't.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="nav-ui">
+        <button class="btn" id="prev-btn" onclick="goPrev()">Back</button>
+        <button class="btn" id="next-btn" onclick="goNext()">Next</button>
+        <button class="btn" id="share-btn" onclick="shareApp()">Share</button>
+    </div>
+
+
+
+    <div id="install-banner">
+    <div class="banner-text">
+        <b>Archive Offline Access</b>
+        Install this app for faster, offline viewing.
+    </div>
+    <div class="banner-btns">
+        <button class="btn-yes" id="btn-accept">INSTALL</button>
+        <button class="btn-close" id="btn-cancel">×</button>
+    </div>
+</div>
+
+
+    <script>
+        const flipAudioFile = "flip.mp3"; 
+        let isFlipping = false;
+
+        function playFlipSound() {
+            const sound = new Audio(flipAudioFile);
+            sound.volume = 0.4;
+            sound.play().catch(e => {});
+        }
+
+        let currentLoc = 1;
+        const pages = document.querySelectorAll('.page');
+        const totalPages = pages.length;
+
+        function render() {
+            const isMobile = window.innerWidth <= 768;
+            const book = document.getElementById('book');
+            const maxLoc = isMobile ? (totalPages * 2) : totalPages + 1;
+
+            if (!isMobile) {
+                if(currentLoc === 1) book.style.transform = "translateX(0%)";
+                else if (currentLoc === maxLoc) book.style.transform = "translateX(100%)"; 
+                else book.style.transform = "translateX(50%)";
+
+                pages.forEach((page, index) => {
+                    if (index + 1 < currentLoc) {
+                        page.classList.add('flipped');
+                        page.style.zIndex = index + 1;
+                    } else {
+                        page.classList.remove('flipped');
+                        page.style.zIndex = totalPages - index;
+                    }
+                });
+            } else {
+                const currentPageIdx = Math.floor((currentLoc - 1) / 2);
+                const isBackSide = (currentLoc - 1) % 2 === 1;
+
+                pages.forEach((page, index) => {
+                    page.classList.remove('show-back');
+                    if (index < currentPageIdx) {
+                        page.classList.add('flipped');
+                        page.style.zIndex = index;
+                    } else if (index === currentPageIdx) {
+                        page.classList.remove('flipped');
+                        page.style.zIndex = 100;
+                        if (isBackSide) page.classList.add('show-back');
+                    } else {
+                        page.classList.remove('flipped');
+                        page.style.zIndex = totalPages - index;
+                    }
+                });
+            }
+
+            currentLoc === 1 ? document.getElementById('prev-btn').classList.add('hidden') : document.getElementById('prev-btn').classList.remove('hidden');
+            const limit = isMobile ? (totalPages * 2) : totalPages + 1;
+            currentLoc === limit ? document.getElementById('next-btn').classList.add('hidden') : document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        async function sequentialJump(targetPage) {
+            if (isFlipping) return;
+            isFlipping = true;
+            const isMobile = window.innerWidth <= 768;
+            const targetLoc = isMobile ? (targetPage * 2 - 1) : targetPage + 1;
+            
+            const direction = targetLoc > currentLoc ? 1 : -1;
+            const steps = Math.abs(targetLoc - currentLoc);
+
+            for (let i = 0; i < steps; i++) {
+                if (direction === 1) currentLoc++;
+                else currentLoc--;
+                playFlipSound();
+                render();
+                await new Promise(r => setTimeout(r, 100));
+            }
+            isFlipping = false;
+        }
+
+        function goNext() { 
+            const isMobile = window.innerWidth <= 768;
+            const limit = isMobile ? (totalPages * 2) : totalPages + 1;
+            if(currentLoc < limit && !isFlipping) { playFlipSound(); currentLoc++; render(); } 
+        }
+        function goPrev() { if(currentLoc > 1 && !isFlipping) { playFlipSound(); currentLoc--; render(); } }
+        function copy(t) { navigator.clipboard.writeText(t); alert("Copied: " + t); }
+
+        window.addEventListener('resize', render);
+        render();
+
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Registered'))
+            .catch(err => console.log('Registration Failed', err));
+    });
+}
+
+async function shareApp() {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Save Turkana Archive',
+                text: 'Witness the digital archive of the Turkana crisis.',
+                url: window.location.href
+            });
+        } catch (err) {
+            //console.log("Error sharing:", err);
+        }
+    } else {
+        copy(window.location.href);
+        alert("Link successfully copied to clipboard!");
+    }
+}
+
+let deferredPrompt;
+const banner = document.getElementById('install-banner');
+const btnAccept = document.getElementById('btn-accept');
+const btnCancel = document.getElementById('btn-cancel');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    setTimeout(() => {
+        if (!sessionStorage.getItem('bannerDismissed')) {
+            banner.classList.add('show');
+        }
+    }, 4000); 
+});
+
+btnAccept.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        banner.classList.remove('show');
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        //console.log(`User response: ${outcome}`);
+        deferredPrompt = null;
+    }
+});
+
+btnCancel.addEventListener('click', () => {
+    banner.classList.remove('show');
+    sessionStorage.setItem('bannerDismissed', 'true');
+});
+
+    </script>
+</body>
+</html>
