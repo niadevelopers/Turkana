@@ -89,7 +89,7 @@
         .addr-box label { color: var(--gold); font-size: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 1px; }
         .addr-box code { color: #eee; font-size: 0.6rem; word-break: break-all; }
 
-        .nav-ui { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 3000; }
+        .nav-ui { position: fixed; bottom: 80px; display: flex; gap: 10px; z-index: 3000; }
         .btn { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; text-transform: uppercase; font-weight: 900; cursor: pointer; font-size: 0.65rem; }
         .btn.hidden { opacity: 0; pointer-events: none; }
 
@@ -519,7 +519,6 @@ async function shareApp() {
                 url: window.location.href
             });
         } catch (err) {
-            //console.log("Error sharing:", err);
         }
     } else {
         copy(window.location.href);
@@ -548,7 +547,6 @@ btnAccept.addEventListener('click', async () => {
         banner.classList.remove('show');
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        //console.log(`User response: ${outcome}`);
         deferredPrompt = null;
     }
 });
@@ -562,6 +560,5 @@ btnCancel.addEventListener('click', () => {
 </body>
 
 </html>
-
 
 
